@@ -52,11 +52,11 @@ const SPECS = {
 };
 
 const classSpecRoles = [
-   /*  { class: CLASSES.dk, spec: SPECS.blood, role: ROLES.tank },
+    { class: CLASSES.dk, spec: SPECS.blood, role: ROLES.tank },
     { class: CLASSES.dk, spec: SPECS.frost, role: ROLES.dps },
-    { class: CLASSES.dk, spec: SPECS.unholy, role: ROLES.dps },*/
+    { class: CLASSES.dk, spec: SPECS.unholy, role: ROLES.dps },
     { class: CLASSES.druid, spec: SPECS.balance, role: ROLES.dps }, 
-    /* { class: CLASSES.druid, spec: SPECS.cat, urlSpec: SPECS.feral, role: ROLES.dps },
+    { class: CLASSES.druid, spec: SPECS.cat, urlSpec: SPECS.feral, role: ROLES.dps },
     { class: CLASSES.druid, spec: SPECS.bear, urlSpec: SPECS.feral, role: ROLES.tank },
     { class: CLASSES.druid, spec: SPECS.restoration, role: ROLES.healer },
     { class: CLASSES.hunter, spec: SPECS.beastMastery, role: ROLES.dps },
@@ -82,7 +82,7 @@ const classSpecRoles = [
     { class: CLASSES.warlock, spec: SPECS.destruction, role: ROLES.dps },
     { class: CLASSES.warrior, spec: SPECS.arms, role: ROLES.dps },
     { class: CLASSES.warrior, spec: SPECS.fury, role: ROLES.dps },
-    { class: CLASSES.warrior, spec: SPECS.protection, role: ROLES.tank } */
+    { class: CLASSES.warrior, spec: SPECS.protection, role: ROLES.tank }
 ];
 
 const SLOTS = {

@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "handlebars": "^4.7.8",
+    "lodash": "^4.17.21",
     "playwright": "^1.49.0"
   }
 }

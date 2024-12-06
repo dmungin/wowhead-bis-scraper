@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 const makeReadable = (item) => item.split('-').map((part) => _.upperFirst(part)).join(' ');
 
-const writeSpecFile = async (data, {class: pClass, spec, role}) => {
+const writeSpecFile = async (items, {class: pClass, spec, role}) => {
     const templateString = await fs.readFile('./templates/bis.hbs', 'utf8');
     const template = handlebars.compile(templateString);
     const readableClass = makeReadable(pClass);
@@ -14,7 +14,7 @@ const writeSpecFile = async (data, {class: pClass, spec, role}) => {
     return fs.writeFile(
         fileName,
         template({
-            currentPhaseItems: data, 
+            items, 
             class: readableClass, 
             spec: readableSpec
         })

@@ -2,11 +2,11 @@ const playwright = require("playwright");
 const { writeSpecFile } = require('./writeSpecFile');
 const { CLASSES, SPECS, SLOTS, CLASS_SPEC_ROLES } = require('./constants');
 
-
-const getClassSpecListUrl = (pClass, spec, urlSpec, role) => {
+const getClassSpecListUrl = ({pClass, spec, urlSpec, role, preRaid = false}) => {
     const wowheadSpec = urlSpec || spec;
+    const suffix = preRaid ? 'pre-raid' : 'pve';
 
-    return `https://www.wowhead.com/cata/guide/classes/${pClass}/${wowheadSpec}/${role}-bis-gear-pve`;
+    return `https://www.wowhead.com/cata/guide/classes/${pClass}/${wowheadSpec}/${role}-bis-gear-${suffix}`;
 }
     
 const getBodyArmorSelector = (order) => `#body-armor ~ :nth-child(${order} of div.markup-table-wrapper) tr`;
@@ -29,7 +29,7 @@ const getBaseSelectors = (offset = 0) => [
     
 ];
 
-const getGearSelectorsBySpec = (pClass, spec) => {
+const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
     if (
         pClass === CLASSES.dk && spec === SPECS.blood ||
         pClass === CLASSES.druid && spec === SPECS.bear ||
@@ -95,7 +95,7 @@ const getGearSelectorsBySpec = (pClass, spec) => {
         
     } else if (
         pClass === CLASSES.druid && spec === SPECS.restoration ||
-        pClass === CLASSES.priest
+        pClass === CLASSES.priest && !preRaid
     ) {
         return [
             ...getBaseSelectors(),
@@ -109,7 +109,8 @@ const getGearSelectorsBySpec = (pClass, spec) => {
     } else if (
         pClass === CLASSES.shaman && spec === SPECS.elemental ||
         pClass === CLASSES.shaman && spec === SPECS.restoration ||
-        pClass === CLASSES.warlock
+        pClass === CLASSES.warlock ||
+        pClass === CLASSES.priest && preRaid
     ) {
         return [
             ...getBaseSelectors(),
@@ -123,31 +124,31 @@ const getGearSelectorsBySpec = (pClass, spec) => {
     }
 }
 
-const waitForOneOf = async (locators) => {
-    const res = await Promise.race([
-        ...locators.map(async (locator, index) => {
-        let timedOut = false;
-        await locator.waitFor({ state: 'visible' }).catch(() => timedOut = true);
-        return [ timedOut ? -1 : index, locator ];
-        }),
-    ]);
-    if (res[0] === -1) {
-        throw new Error('no locator visible before timeout');
-    }
-    return res;
-};
+const getIsBis = (rankText, index) => {
+    const bisText = [
+        "bis",
+        "recommended",
+        "recommended",
+        "best in slot",
+        "best"
+    ];
 
-const parseSpec = async (page, { class: pClass, spec, urlSpec, role }) => {
-    const url = getClassSpecListUrl(pClass, spec, urlSpec, role);
+    return index === 0 || bisText.some((text) => rankText.toLowerCase().includes(text));
+}
+
+const parseSpec = async (page, { class: pClass, spec, urlSpec, role }, preRaid) => {
+    const url = getClassSpecListUrl({pClass, spec, urlSpec, role, preRaid});
     await page.goto(url, {waitUntil: 'domcontentloaded'});
 
-    console.log(`===== Parsing: ${pClass} - ${spec} - ${role} ========`);
+    console.log(`===== Parsing: ${pClass} - ${spec} - ${role} - ${preRaid ? 'PreRaid' : 'BIS'} ========`);
     const results = [];
-    for (const {selector, slot} of getGearSelectorsBySpec(pClass, spec, role)) {
+    for (const {selector, slot} of getGearSelectorsBySpec(pClass, spec, preRaid)) {
         const itemRows = await page.locator(selector).filter({ hasNotText: 'Item'}).all()
 
-        const slotItems = await Promise.all(itemRows.map(async (itemRow) => { 
-            const isBis = (await itemRow.locator('td:nth-child(1)').textContent()).trim() === 'Best';
+        const slotItems = await Promise.all(itemRows.map(async (itemRow, index) => { 
+
+            const rankText = (await itemRow.locator('td:nth-child(1)').textContent()).trim();
+            const isBis = getIsBis(rankText, index);
             const rowItems = [];
             /* Some certain items can have multiple versions (alliance / horde for example) so loop over links */
             for (const itemLink of await itemRow.locator('td:nth-child(2) a').all()) {
@@ -174,16 +175,19 @@ const parseSpec = async (page, { class: pClass, spec, urlSpec, role }) => {
 
 const init = async () => {
     const browser = await playwright.chromium.launch({
-        headless: false,
+        //headless: false,
         
     });
     const context = await browser.newContext();
     const page = await context.newPage();
     for ( const classSpecRole of CLASS_SPEC_ROLES) {
-        const result = await parseSpec(page, classSpecRole);
-        await writeSpecFile(result, classSpecRole);
-        console.log(result);
+        const preRaid = await parseSpec(page, classSpecRole, true);
+        const bis = await parseSpec(page, classSpecRole, false);
+        await writeSpecFile([preRaid, bis], classSpecRole);
+        // console.log(result);
     }
 }
 
-init();
+init()
+.then(() => console.log("Parsing Complete!"))
+.then(() => process.exit(0));

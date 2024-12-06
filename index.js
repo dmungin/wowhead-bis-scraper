@@ -31,9 +31,9 @@ const getBaseSelectors = (offset = 0) => [
 
 const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
     if (
-        pClass === CLASSES.dk && spec === SPECS.blood ||
-        pClass === CLASSES.druid && spec === SPECS.bear ||
-        pClass === CLASSES.paladin && spec === SPECS.retribution
+        (pClass === CLASSES.dk && spec === SPECS.blood) ||
+        (pClass === CLASSES.druid && spec === SPECS.bear) ||
+        (pClass === CLASSES.paladin && spec === SPECS.retribution)
     ) {
         return [
             ...getBaseSelectors(),
@@ -43,10 +43,10 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
             { selector: getWeaponSelector(15), slot: SLOTS.ranged },
         ];
     } else if (
-        pClass === CLASSES.paladin && spec === SPECS.protection ||
-        pClass === CLASSES.warrior && spec === SPECS.protection ||
-        pClass === CLASSES.dk && spec === SPECS.frost ||
-        pClass === CLASSES.paladin && spec === SPECS.holy ||
+        (pClass === CLASSES.paladin && spec === SPECS.protection) ||
+        (pClass === CLASSES.warrior && spec === SPECS.protection)||
+        (pClass === CLASSES.dk && spec === SPECS.frost) ||
+        (pClass === CLASSES.paladin && spec === SPECS.holy) ||
         pClass === CLASSES.rogue ||
         pClass === CLASSES.mage
     ) {
@@ -70,11 +70,11 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
         ];
         
     } else if (
-        pClass === CLASSES.dk && spec === SPECS.unholy ||
-        pClass === CLASSES.druid && spec === SPECS.cat ||
-        pClass === CLASSES.hunter ||
-        pClass === CLASSES.warrior && spec === SPECS.arms ||
-        pClass === CLASSES.warrior && spec === SPECS.fury
+        (pClass === CLASSES.dk && spec === SPECS.unholy) ||
+        (pClass === CLASSES.druid && spec === SPECS.cat) ||
+        (pClass === CLASSES.warrior && spec === SPECS.arms) ||
+        (pClass === CLASSES.warrior && spec === SPECS.fury) ||
+        pClass === CLASSES.hunter
     ) {
         return [
             ...getBaseSelectors(),
@@ -94,8 +94,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
         ];
         
     } else if (
-        pClass === CLASSES.druid && spec === SPECS.restoration ||
-        pClass === CLASSES.priest && !preRaid
+        (pClass === CLASSES.druid && spec === SPECS.restoration) ||
+        (pClass === CLASSES.priest && !preRaid)
     ) {
         return [
             ...getBaseSelectors(),
@@ -107,10 +107,10 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
         ];
         
     } else if (
-        pClass === CLASSES.shaman && spec === SPECS.elemental ||
-        pClass === CLASSES.shaman && spec === SPECS.restoration ||
-        pClass === CLASSES.warlock ||
-        pClass === CLASSES.priest && preRaid
+        (pClass === CLASSES.shaman && spec === SPECS.elemental) ||
+        (pClass === CLASSES.shaman && spec === SPECS.restoration) ||
+        (pClass === CLASSES.priest && preRaid) ||
+        pClass === CLASSES.warlock
     ) {
         return [
             ...getBaseSelectors(),
@@ -154,7 +154,7 @@ const parseSpec = async (page, { class: pClass, spec, urlSpec, role }, preRaid) 
             for (const itemLink of await itemRow.locator('td:nth-child(2) a').all()) {
                 const itemHref = await itemLink.getAttribute('href');
                 const name = (await itemLink.textContent()).trim();
-                const [,itemId] = itemHref.match(/item=(\d+)[\/&]/);
+                const [,itemId] = itemHref.match(/item=(\d+)[/&]/);
                 rowItems.push({
                     name,
                     itemId,

@@ -6,15 +6,12 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint . --ext .js",
-    "lintfix": "eslint . --ext .js --fix"
+    "lint": "eslint .",
+    "lintfix": "eslint . --fix"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "eslintConfig": {
-    "extends": "airbnb-base"
-  },
   "dependencies": {
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",

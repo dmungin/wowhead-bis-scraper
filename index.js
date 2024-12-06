@@ -120,6 +120,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(16), slot: SLOTS.ranged },
     ];
   }
+
+  return [];
 };
 
 const getIsBis = (rankText, index) => {
@@ -144,6 +146,7 @@ const parseSpec = async (page, {
 
   console.log(`===== Parsing: ${pClass} - ${spec} - ${role} - ${preRaid ? 'PreRaid' : 'BIS'} ========`);
   const results = [];
+  // eslint-disable-next-line no-restricted-syntax
   for (const { selector, slot } of getGearSelectorsBySpec(pClass, spec, preRaid)) {
     const itemRows = await page.locator(selector).filter({ hasNotText: 'Item' }).all();
 
@@ -151,8 +154,9 @@ const parseSpec = async (page, {
       const rankText = (await itemRow.locator('td:nth-child(1)').textContent()).trim();
       const isBis = getIsBis(rankText, index);
       const rowItems = [];
-      /* Some certain items can have multiple versions 
+      /* Some certain items can have multiple versions
       (alliance / horde for example) so loop over links */
+      // eslint-disable-next-line no-restricted-syntax
       for (const itemLink of await itemRow.locator('td:nth-child(2) a').all()) {
         const itemHref = await itemLink.getAttribute('href');
         const name = (await itemLink.textContent()).trim();
@@ -175,12 +179,10 @@ const parseSpec = async (page, {
 };
 
 const init = async () => {
-  const browser = await playwright.chromium.launch({
-    // headless: false,
-
-  });
+  const browser = await playwright.chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
+  // eslint-disable-next-line no-restricted-syntax
   for (const classSpecRole of CLASS_SPEC_ROLES) {
     const preRaid = await parseSpec(page, classSpecRole, true);
     const bis = await parseSpec(page, classSpecRole, false);

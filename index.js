@@ -1,3 +1,4 @@
+const fs = require('node:fs/promises');
 const playwright = require('playwright');
 const { writeSpecFile } = require('./writeSpecFile');
 const {
@@ -179,6 +180,12 @@ const parseSpec = async (page, {
 };
 
 const init = async () => {
+  await fs.mkdir('./bis')
+    .then(() => console.log('created "/bis" directory.'))
+    .catch((err) => {
+      if (err && err.code === 'EEXIST') console.log('bis directory already created. Skipping "mkdir" command.');
+      else throw err;
+    });
   const browser = await playwright.chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();

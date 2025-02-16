@@ -7,7 +7,7 @@ Future updates will add additonal output formats such as JSON, that may be usefu
 ## How to use:
 
 ```shell
-# Install Dependencies
+# Install dependencies
 npm ci
 
 # Run scraper

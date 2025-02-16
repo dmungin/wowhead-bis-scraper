@@ -1,6 +1,7 @@
 {
   "extends": "airbnb-base",
   "rules": {
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "linebreak-style": ["error", "unix"]
   }
 }

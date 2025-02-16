@@ -6,7 +6,7 @@ Future updates will add additonal output formats such as JSON, that may be usefu
 
 ## How to use:
 
-```shell
+```bash
 # Install dependencies
 npm ci
 

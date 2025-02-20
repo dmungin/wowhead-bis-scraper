@@ -14,23 +14,38 @@ const getClassSpecListUrl = ({
   return `https://www.wowhead.com/cata/guide/classes/${pClass}/${wowheadSpec}/${role}-bis-gear-${suffix}`;
 };
 
-const getBodyArmorSelector = (order) => `#body-armor ~ :nth-child(${order} of div.markup-table-wrapper) tr`;
-const getJewelrySelector = (order) => `#jewelry ~ :nth-child(${order} of div.markup-table-wrapper) tr`;
-const getWeaponSelector = (order) => `#weapons ~ :nth-child(${order} of div.markup-table-wrapper) tr`;
+const getBodyArmorSelector = (
+  order, 
+  { sectionId = 'body-armor', tableSelector = 'div.markup-table-wrapper' } = {}
+) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
+const getJewelrySelector = (
+  order, 
+  { sectionId = 'jewelry', tableSelector = 'div.markup-table-wrapper' } = {}
+) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
+const getWeaponSelector =  (
+  order, 
+  { sectionId = 'weapons', tableSelector = 'div.markup-table-wrapper' } = {}
+) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
 
 /* Currently balance druid has 1 extra table so offset fixes this */
-const getBaseSelectors = (offset = 0) => [
-  { selector: getBodyArmorSelector(1 + offset), slot: SLOTS.head },
-  { selector: getBodyArmorSelector(2 + offset), slot: SLOTS.shoulder },
-  { selector: getBodyArmorSelector(3 + offset), slot: SLOTS.back },
-  { selector: getBodyArmorSelector(4 + offset), slot: SLOTS.chest },
-  { selector: getBodyArmorSelector(5 + offset), slot: SLOTS.wrist },
-  { selector: getBodyArmorSelector(6 + offset), slot: SLOTS.hands },
-  { selector: getBodyArmorSelector(7 + offset), slot: SLOTS.waist },
-  { selector: getBodyArmorSelector(8 + offset), slot: SLOTS.legs },
-  { selector: getBodyArmorSelector(9 + offset), slot: SLOTS.feet },
-  { selector: getJewelrySelector(10 + offset), slot: SLOTS.neck },
-  { selector: getJewelrySelector(11 + offset), slot: SLOTS.ring },
+const getBaseSelectors = (
+  offset = 0,
+  {
+    bodyArmorOverrides,
+    jewelryOverrides,
+  } = {}
+) => [
+  { selector: getBodyArmorSelector(1 + offset, bodyArmorOverrides), slot: SLOTS.head },
+  { selector: getBodyArmorSelector(2 + offset, bodyArmorOverrides), slot: SLOTS.shoulder },
+  { selector: getBodyArmorSelector(3 + offset, bodyArmorOverrides), slot: SLOTS.back },
+  { selector: getBodyArmorSelector(4 + offset, bodyArmorOverrides), slot: SLOTS.chest },
+  { selector: getBodyArmorSelector(5 + offset, bodyArmorOverrides), slot: SLOTS.wrist },
+  { selector: getBodyArmorSelector(6 + offset, bodyArmorOverrides), slot: SLOTS.hands },
+  { selector: getBodyArmorSelector(7 + offset, bodyArmorOverrides), slot: SLOTS.waist },
+  { selector: getBodyArmorSelector(8 + offset, bodyArmorOverrides), slot: SLOTS.legs },
+  { selector: getBodyArmorSelector(9 + offset, bodyArmorOverrides), slot: SLOTS.feet },
+  { selector: getJewelrySelector(10 + offset, jewelryOverrides), slot: SLOTS.neck },
+  { selector: getJewelrySelector(11 + offset, jewelryOverrides), slot: SLOTS.ring },
 
 ];
 
@@ -38,7 +53,6 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
   if (
     (pClass === CLASSES.dk && spec === SPECS.blood)
         || (pClass === CLASSES.druid && spec === SPECS.bear)
-        || (pClass === CLASSES.paladin && spec === SPECS.retribution)
   ) {
     return [
       ...getBaseSelectors(),
@@ -46,6 +60,19 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getJewelrySelector(13), slot: SLOTS.trinket },
       { selector: getWeaponSelector(14), slot: SLOTS.twoHand },
       { selector: getWeaponSelector(15), slot: SLOTS.ranged },
+    ];
+  } if (
+    (pClass === CLASSES.paladin && spec === SPECS.retribution) // ret has extra table wrapper div :(
+  ) {
+    return [
+      ...getBaseSelectors(3, {
+        bodyArmorOverrides: {
+          tableSelector: '.wh-center'
+        }
+      }),
+      { selector: getJewelrySelector(15, { tableSelector: '.wh-center' }), slot: SLOTS.trinket },
+      { selector: getWeaponSelector(16, { tableSelector: '.wh-center' }), slot: SLOTS.twoHand },
+      { selector: getWeaponSelector(17, { tableSelector: '.wh-center' }), slot: SLOTS.ranged },
     ];
   } if (
     (pClass === CLASSES.paladin && spec === SPECS.protection)
@@ -63,7 +90,7 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(15), slot: SLOTS.ranged },
     ];
   } if (
-    pClass === CLASSES.druid && spec === SPECS.balance
+    pClass === CLASSES.druid && spec === SPECS.balance && preRaid
   ) {
     return [
       ...getBaseSelectors(1),
@@ -71,6 +98,16 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(14), slot: SLOTS.mainHand },
       { selector: getWeaponSelector(15), slot: SLOTS.offHand },
       { selector: getWeaponSelector(16), slot: SLOTS.ranged },
+    ];
+  } if (
+    pClass === CLASSES.druid && spec === SPECS.balance && !preRaid
+  ) {
+    return [
+      ...getBaseSelectors(2),
+      { selector: getJewelrySelector(14), slot: SLOTS.trinket },
+      { selector: getWeaponSelector(15), slot: SLOTS.mainHand },
+      { selector: getWeaponSelector(16), slot: SLOTS.offHand },
+      { selector: getWeaponSelector(17), slot: SLOTS.ranged },
     ];
   } if (
     (pClass === CLASSES.dk && spec === SPECS.unholy)
@@ -95,8 +132,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(14), slot: SLOTS.ranged },
     ];
   } if (
-    (pClass === CLASSES.druid && spec === SPECS.restoration)
-        || (pClass === CLASSES.priest && !preRaid)
+    (pClass === CLASSES.druid && spec === SPECS.restoration && preRaid)
+        || (pClass === CLASSES.priest && !preRaid && spec !== SPECS.holy)
   ) {
     return [
       ...getBaseSelectors(),
@@ -106,14 +143,50 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(15), slot: SLOTS.twoHand },
       { selector: getWeaponSelector(16), slot: SLOTS.ranged },
     ];
+  } if (pClass === CLASSES.priest && !preRaid && spec === SPECS.holy) {
+    return [
+      ...getBaseSelectors(),
+      { selector: getJewelrySelector(12), slot: SLOTS.trinket },
+      { selector: getJewelrySelector(13), slot: SLOTS.trinket },
+      { selector: getWeaponSelector(14), slot: SLOTS.mainHand },
+      { selector: getWeaponSelector(15), slot: SLOTS.offHand },
+      { selector: getWeaponSelector(16), slot: SLOTS.twoHand },
+      { selector: getWeaponSelector(17), slot: SLOTS.ranged },
+    ];
   } if (
     (pClass === CLASSES.shaman && spec === SPECS.elemental)
-        || (pClass === CLASSES.shaman && spec === SPECS.restoration)
+        || (pClass === CLASSES.shaman && spec === SPECS.restoration && preRaid) //remove preRaid filter once header is added
         || (pClass === CLASSES.priest && preRaid)
-        || pClass === CLASSES.warlock
+        || (pClass === CLASSES.druid && spec === SPECS.restoration && !preRaid)
   ) {
     return [
       ...getBaseSelectors(),
+      { selector: getJewelrySelector(12), slot: SLOTS.trinket },
+      { selector: getWeaponSelector(13), slot: SLOTS.twoHand },
+      { selector: getWeaponSelector(14), slot: SLOTS.mainHand },
+      { selector: getWeaponSelector(15), slot: SLOTS.offHand },
+      { selector: getWeaponSelector(16), slot: SLOTS.ranged },
+    ];
+  }  if (
+      pClass === CLASSES.warlock
+  ) {
+    return [
+      ...getBaseSelectors(2),
+      { selector: getJewelrySelector(14), slot: SLOTS.trinket },
+      { selector: getWeaponSelector(15), slot: SLOTS.twoHand },
+      { selector: getWeaponSelector(16), slot: SLOTS.mainHand },
+      { selector: getWeaponSelector(17), slot: SLOTS.offHand },
+      { selector: getWeaponSelector(18), slot: SLOTS.ranged },
+    ];
+  }  if (
+    (pClass === CLASSES.shaman && spec === SPECS.restoration && !preRaid) //Issue currently #body-armor heading is missing from page
+  ) {
+    return [
+      ...getBaseSelectors(0, {
+        bodyArmorOverrides: {
+          sectionId: 'valor-points'
+        }
+      }),
       { selector: getJewelrySelector(12), slot: SLOTS.trinket },
       { selector: getWeaponSelector(13), slot: SLOTS.twoHand },
       { selector: getWeaponSelector(14), slot: SLOTS.mainHand },

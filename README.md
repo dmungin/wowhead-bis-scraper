@@ -1,8 +1,10 @@
 # wowhead bis scraper
 
-Web scraper that scrapes [www.wowhead.com](https://www.wowhead.com/cata) preraid bis and raid bis lists for Cataclysm Classic. The bis lists are output into lua files that are formatted to work with my Wow Addon "LootAlert": https://github.com/dmungin/LootAlert
+Web scraper that scrapes [www.wowhead.com](https://www.wowhead.com/cata) preraid bis and raid bis lists for Cataclysm Classic. 
 
-Future updates will add additonal output formats such as JSON, that may be useful for other projects.
+By default, the bis lists are output into lua files that are formatted to work with my Wow Addon "LootAlert": https://github.com/dmungin/LootAlert
+
+You can choose to output the data as json as well. See commands listed below
 
 ## How to use:
 
@@ -10,8 +12,15 @@ Future updates will add additonal output formats such as JSON, that may be usefu
 # Install dependencies
 npm ci
 
-# Run scraper
+# Run scraping logic to output lua
 npm start 
+# or 
+npm run generate
+# or 
+npm run generate:lua
+
+# Run scaper with json file output
+npm run generate:json
 ```
 
 This project uses playwright to read and pull information from wowhead. See documentation here: https://playwright.dev/

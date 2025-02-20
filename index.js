@@ -4,6 +4,7 @@ const { writeSpecFile } = require('./writeSpecFile');
 const {
   CLASSES, SPECS, SLOTS, CLASS_SPEC_ROLES,
 } = require('./constants');
+const argv = require('minimist')(process.argv.slice(2));
 
 const getClassSpecListUrl = ({
   pClass, spec, urlSpec, role, preRaid = false,
@@ -252,7 +253,9 @@ const parseSpec = async (page, {
   return results;
 };
 
-const init = async () => {
+const init = async ({ format = 'lua' }) => {
+  if (!['lua', 'json'].includes(format)) throw new Error(`Invalid "format" argument: ${format}. Possible values are: "lua" or "json"`);
+
   await fs.mkdir('./bis')
     .then(() => console.log('created "/bis" directory.'))
     .catch((err) => {
@@ -266,11 +269,10 @@ const init = async () => {
   for (const classSpecRole of CLASS_SPEC_ROLES) {
     const preRaid = await parseSpec(page, classSpecRole, true);
     const bis = await parseSpec(page, classSpecRole, false);
-    await writeSpecFile([preRaid, bis], classSpecRole);
-    // console.log(result);
+    await writeSpecFile([preRaid, bis], classSpecRole, format);
   }
 };
 
-init()
+init(argv)
   .then(() => console.log('Parsing Complete!'))
   .then(() => process.exit(0));

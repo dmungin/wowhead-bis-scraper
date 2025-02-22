@@ -4,7 +4,7 @@ local LootAlert = core.LootAlert;
 
 local function loadBis ()
     local spec0 = LootAlert:RegisterSpec("{{class}}", "{{spec}}", "0")
-    local spec3 = LootAlert:RegisterSpec("{{class}}", "{{spec}}", "3")
+    local spec4 = LootAlert:RegisterSpec("{{class}}", "{{spec}}", "4")
 
     -- PreRaid
     {{#each items.[0]}}
@@ -13,7 +13,7 @@ local function loadBis ()
 
     -- Current Phase
     {{#each items.[1]}}
-    LootAlert:AddItem(spec3, "{{itemId}}", "{{slot}}", "{{#if isBis}}BIS{{else}}Alt{{/if}}") -- {{{name}}}
+    LootAlert:AddItem(spec4, "{{itemId}}", "{{slot}}", "{{#if isBis}}BIS{{else}}Alt{{/if}}") -- {{{name}}}
     {{/each}}
 end
 

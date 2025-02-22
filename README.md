@@ -19,7 +19,7 @@ npm run generate
 # or 
 npm run generate:lua
 
-# Run scaper with json file output
+# Run scraper with json file output
 npm run generate:json
 ```
 

@@ -106,10 +106,19 @@ const SLOTS = {
   ranged: 'Ranged/Relic',
 };
 
+const TOKEN_SLOT_TO_INV_SLOT_MAP = {
+  Head: 'INVTYPE_HEAD',
+  Shoulder: 'INVTYPE_SHOULDER',
+  Chest: 'INVTYPE_CHEST',
+  Hands: 'INVTYPE_HAND',
+  Legs: 'INVTYPE_LEGS',
+};
+
 module.exports = {
   ROLES,
   CLASSES,
   SPECS,
   SLOTS,
   CLASS_SPEC_ROLES,
+  TOKEN_SLOT_TO_INV_SLOT_MAP,
 };

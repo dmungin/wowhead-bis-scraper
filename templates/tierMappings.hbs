@@ -1,0 +1,12 @@
+
+local _, core = ...;
+local LootAlert = core.LootAlert;
+
+function LootAlert:PopulateTierMappings ()
+    return {
+        {{#each tierMappings}}
+        [{{itemId}}] = { Name = "{{name}}",  Slot = "{{tokenSlot}}", Items = { {{#each tokenItems}}{{this.itemId}},{{/each}} } },
+        {{/each}}
+    }
+end
+

@@ -1,10 +1,11 @@
 const fs = require('node:fs/promises');
+const argv = require('minimist')(process.argv.slice(2));
 const playwright = require('playwright');
 const { writeSpecFile } = require('./writeSpecFile');
+const { writeTierFile } = require('./writeTierFile');
 const {
-  CLASSES, SPECS, SLOTS, CLASS_SPEC_ROLES,
+  CLASSES, SPECS, SLOTS, CLASS_SPEC_ROLES, TOKEN_SLOT_TO_INV_SLOT_MAP,
 } = require('./constants');
-const argv = require('minimist')(process.argv.slice(2));
 
 const getClassSpecListUrl = ({
   pClass, spec, urlSpec, role, preRaid = false,
@@ -16,16 +17,16 @@ const getClassSpecListUrl = ({
 };
 
 const getBodyArmorSelector = (
-  order, 
-  { sectionId = 'body-armor', tableSelector = 'div.markup-table-wrapper' } = {}
+  order,
+  { sectionId = 'body-armor', tableSelector = 'div.markup-table-wrapper' } = {},
 ) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
 const getJewelrySelector = (
-  order, 
-  { sectionId = 'jewelry', tableSelector = 'div.markup-table-wrapper' } = {}
+  order,
+  { sectionId = 'jewelry', tableSelector = 'div.markup-table-wrapper' } = {},
 ) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
-const getWeaponSelector =  (
-  order, 
-  { sectionId = 'weapons', tableSelector = 'div.markup-table-wrapper' } = {}
+const getWeaponSelector = (
+  order,
+  { sectionId = 'weapons', tableSelector = 'div.markup-table-wrapper' } = {},
 ) => `#${sectionId} ~ :nth-child(${order} of ${tableSelector}) tr`;
 
 /* Currently balance druid has 1 extra table so offset fixes this */
@@ -34,7 +35,7 @@ const getBaseSelectors = (
   {
     bodyArmorOverrides,
     jewelryOverrides,
-  } = {}
+  } = {},
 ) => [
   { selector: getBodyArmorSelector(1 + offset, bodyArmorOverrides), slot: SLOTS.head },
   { selector: getBodyArmorSelector(2 + offset, bodyArmorOverrides), slot: SLOTS.shoulder },
@@ -68,8 +69,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
     return [
       ...getBaseSelectors(3, {
         bodyArmorOverrides: {
-          tableSelector: '.wh-center'
-        }
+          tableSelector: '.wh-center',
+        },
       }),
       { selector: getJewelrySelector(15, { tableSelector: '.wh-center' }), slot: SLOTS.trinket },
       { selector: getWeaponSelector(16, { tableSelector: '.wh-center' }), slot: SLOTS.twoHand },
@@ -156,7 +157,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
     ];
   } if (
     (pClass === CLASSES.shaman && spec === SPECS.elemental)
-        || (pClass === CLASSES.shaman && spec === SPECS.restoration && preRaid) //remove preRaid filter once header is added
+        // remove preRaid filter once header is added
+        || (pClass === CLASSES.shaman && spec === SPECS.restoration && preRaid)
         || (pClass === CLASSES.priest && preRaid)
         || (pClass === CLASSES.druid && spec === SPECS.restoration && !preRaid)
   ) {
@@ -168,8 +170,8 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(15), slot: SLOTS.offHand },
       { selector: getWeaponSelector(16), slot: SLOTS.ranged },
     ];
-  }  if (
-      pClass === CLASSES.warlock
+  } if (
+    pClass === CLASSES.warlock
   ) {
     return [
       ...getBaseSelectors(2),
@@ -179,14 +181,15 @@ const getGearSelectorsBySpec = (pClass, spec, preRaid) => {
       { selector: getWeaponSelector(17), slot: SLOTS.offHand },
       { selector: getWeaponSelector(18), slot: SLOTS.ranged },
     ];
-  }  if (
-    (pClass === CLASSES.shaman && spec === SPECS.restoration && !preRaid) //Issue currently #body-armor heading is missing from page
+  } if (
+    // Issue currently #body-armor heading is missing from page
+    (pClass === CLASSES.shaman && spec === SPECS.restoration && !preRaid)
   ) {
     return [
       ...getBaseSelectors(0, {
         bodyArmorOverrides: {
-          sectionId: 'valor-points'
-        }
+          sectionId: 'valor-points',
+        },
       }),
       { selector: getJewelrySelector(12), slot: SLOTS.trinket },
       { selector: getWeaponSelector(13), slot: SLOTS.twoHand },
@@ -253,6 +256,69 @@ const parseSpec = async (page, {
   return results;
 };
 
+const addItemLink = async (links, link) => {
+  const itemHref = await link.getAttribute('href');
+  const name = (await link.textContent()).trim();
+  const [, itemId] = itemHref.match(/item=(\d+)[/&]/);
+  links.push({
+    name,
+    itemId,
+    itemHref,
+  });
+};
+
+const parseTier = async (context) => {
+  const mainPage = await context.newPage();
+  await mainPage.goto('https://www.wowhead.com/cata/guide/raids/dragon-soul/tier-13-sets');
+  const tokenTypeRows = await mainPage.locator('#guide-body .wh-center:nth-of-type(5) .markup-table-wrapper tr').filter({ hasNotText: 'Classes' }).all();
+
+  const tokenLinksByType = await Promise.all(tokenTypeRows.map(async (tokenTypeRow) => {
+    const tokenLinks = [];
+    // LFR Token loop
+    // eslint-disable-next-line no-restricted-syntax
+    for (const tokenLink of await tokenTypeRow.locator('td:nth-of-type(2) a').all()) {
+      await addItemLink(tokenLinks, tokenLink);
+    }
+    // Normal Token loop
+    // eslint-disable-next-line no-restricted-syntax
+    for (const tokenLink of await tokenTypeRow.locator('td:nth-of-type(3) a').all()) {
+      await addItemLink(tokenLinks, tokenLink);
+    }
+    // Heroic Token loop
+    // eslint-disable-next-line no-restricted-syntax
+    for (const tokenLink of await tokenTypeRow.locator('td:nth-of-type(4) a').all()) {
+      await addItemLink(tokenLinks, tokenLink);
+    }
+
+    return tokenLinks;
+  }));
+  const tokenLinks = tokenLinksByType.flat();
+  const tokenMappings = await Promise.all(tokenLinks.map(async ({ name, itemId, itemHref }) => {
+    const tokenPage = await context.newPage();
+    await tokenPage.goto(`${itemHref}#currency-for`);
+    // await tokenPage.locator('a[href="#currency-for"]').click();
+    const tokenItems = [];
+    let tokenSlot = 'Unknown';
+    // eslint-disable-next-line no-restricted-syntax
+    for (const itemRow of await tokenPage.locator('#tab-currency-for tr.listview-row').all()) {
+      const itemLink = await itemRow.locator('td:nth-of-type(3) a.listview-cleartext');
+      tokenSlot = TOKEN_SLOT_TO_INV_SLOT_MAP[(await (await itemRow.locator('td:nth-of-type(8)')).textContent()).trim()];
+      await addItemLink(tokenItems, itemLink);
+    }
+
+    await tokenPage.close();
+
+    return {
+      itemId,
+      name,
+      tokenSlot,
+      tokenItems,
+    };
+  }));
+
+  return tokenMappings;
+};
+
 const init = async ({ format = 'lua' }) => {
   if (!['lua', 'json'].includes(format)) throw new Error(`Invalid "format" argument: ${format}. Possible values are: "lua" or "json"`);
 
@@ -271,6 +337,9 @@ const init = async ({ format = 'lua' }) => {
     const bis = await parseSpec(page, classSpecRole, false);
     await writeSpecFile([preRaid, bis], classSpecRole, format);
   }
+
+  const tierMappings = await parseTier(context);
+  await writeTierFile(tierMappings, format);
 };
 
 init(argv)

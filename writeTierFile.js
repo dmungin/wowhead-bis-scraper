@@ -1,6 +1,5 @@
 const fs = require('node:fs/promises');
 const handlebars = require('handlebars');
-const _ = require('lodash');
 
 const writeLuaFile = async (tierMappings) => {
   const templateString = await fs.readFile('./templates/tierMappings.hbs', 'utf8');

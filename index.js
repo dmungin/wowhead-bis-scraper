@@ -294,15 +294,16 @@ const parseTier = async (context) => {
   }));
   const tokenLinks = tokenLinksByType.flat();
   const tokenMappings = await Promise.all(tokenLinks.map(async ({ name, itemId, itemHref }) => {
+    console.log(`===== Parsing Tier Token: ${name} ========`);
     const tokenPage = await context.newPage();
     await tokenPage.goto(`${itemHref}#currency-for`);
-    // await tokenPage.locator('a[href="#currency-for"]').click();
+
     const tokenItems = [];
     let tokenSlot = 'Unknown';
     // eslint-disable-next-line no-restricted-syntax
     for (const itemRow of await tokenPage.locator('#tab-currency-for tr.listview-row').all()) {
-      const itemLink = await itemRow.locator('td:nth-of-type(3) a.listview-cleartext');
-      tokenSlot = TOKEN_SLOT_TO_INV_SLOT_MAP[(await (await itemRow.locator('td:nth-of-type(8)')).textContent()).trim()];
+      const itemLink = itemRow.locator('td:nth-of-type(3) a.listview-cleartext');
+      tokenSlot = TOKEN_SLOT_TO_INV_SLOT_MAP[(await itemRow.locator('td:nth-of-type(8)').textContent()).trim()];
       await addItemLink(tokenItems, itemLink);
     }
 

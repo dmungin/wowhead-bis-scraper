@@ -6,6 +6,8 @@ By default, the bis lists are output into lua files that are formatted to work w
 
 You can choose to output the data as json as well. See commands listed below
 
+Note: Requires Node.js to run - https://nodejs.org/
+
 ## How to use:
 
 ```bash
